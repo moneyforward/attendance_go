@@ -1,0 +1,22 @@
+{
+    // https://github.com/golang/vscode-go/blob/master/docs/debugging.md
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Socket mode",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "cmd/socket",
+            "envFile": "${workspaceFolder}/.env",
+        },
+        {
+            "name": "Launch Webhook mode",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "cmd/webhook",
+            "envFile": "${workspaceFolder}/.env",
+        }
+    ]
+}
