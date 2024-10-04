@@ -62,36 +62,39 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	go func() {
-		for evt := range client.Events {
-			switch evt.Type {
-			case socketmode.EventTypeConnecting:
-				slog.InfoContext(ctx, "connecting to Slack with Socket Mode")
-			case socketmode.EventTypeHello:
-				slog.InfoContext(ctx, "hello from Slack with Socket Mode")
-			case socketmode.EventTypeConnectionError:
-				slog.ErrorContext(ctx, "connection failed. Retry later", slog.String("error", fmt.Sprintf("%+v", evt.Data)))
-			case socketmode.EventTypeConnected:
-				slog.InfoContext(ctx, "connected to Slack with Socket Mode")
-			case socketmode.EventTypeSlashCommand:
-				cmd, ok := evt.Data.(slack.SlashCommand)
-				if !ok {
-					slog.WarnContext(ctx, "failed to parse slash command")
-					continue
-				}
-				msg, err := handler.HandleSlashCommandEvent(ctx, api, cmd)
-				if err != nil {
-					slog.ErrorContext(ctx, "failed to handle slash command", slog.String("error", err.Error()))
-					msg = nil
-				}
-				slog.DebugContext(ctx, "sending response", "msg", msg)
-				client.Ack(*evt.Request, msg)
+	sh := socketmode.NewSocketmodeHandler(client)
 
-			default:
-				slog.WarnContext(ctx, "unexpected event type received", slog.String("type", string(evt.Type)))
-			}
+	sh.Handle(socketmode.EventTypeConnecting, func(e *socketmode.Event, c *socketmode.Client) {
+		slog.Info("connecting to Slack with Socket Mode")
+	})
+
+	sh.Handle(socketmode.EventTypeHello, func(e *socketmode.Event, c *socketmode.Client) {
+		slog.Info("hello from Slack with Socket Mode")
+	})
+
+	sh.Handle(socketmode.EventTypeConnectionError, func(e *socketmode.Event, c *socketmode.Client) {
+		slog.Error("connection failed. Retry later", slog.String("error", fmt.Sprintf("%+v", e.Data)))
+	})
+
+	sh.Handle(socketmode.EventTypeConnected, func(e *socketmode.Event, c *socketmode.Client) {
+		slog.Info("connected to Slack with Socket Mode")
+	})
+
+	sh.Handle(socketmode.EventTypeSlashCommand, func(e *socketmode.Event, c *socketmode.Client) {
+		slog.Debug("slash command received", "command", e.Data)
+		cmd, ok := e.Data.(slack.SlashCommand)
+		if !ok {
+			slog.Warn("failed to parse slash command")
+			return
 		}
-	}()
+		msg, err := handler.HandleSlashCommandEvent(ctx, api, cmd)
+		if err != nil {
+			slog.Error("failed to handle slash command", slog.String("error", err.Error()))
+			msg = nil
+		}
+		slog.Debug("sending response", "msg", msg)
+		c.Ack(*e.Request, msg)
+	})
 
-	slog.Error("loop exit", slog.String("error", client.Run().Error()))
+	slog.Error("loop exit", slog.String("error", sh.RunEventLoopContext(ctx).Error()))
 }
