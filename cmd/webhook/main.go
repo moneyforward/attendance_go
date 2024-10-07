@@ -104,14 +104,14 @@ func main() {
 	}
 
 	go func() {
+		slog.Info("server listening", slog.String("port", port))
+		slog.Error("server shutdown", slog.String("error", serv.ListenAndServe().Error()))
+	}()
 		<-ctx.Done()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		slog.Warn("shutting down server")
 		serv.Shutdown(ctx)
-	}()
 
-	slog.Info("server listening", slog.String("port", port))
-	slog.Error("server shutdown", slog.String("error", serv.ListenAndServe().Error()))
 }
