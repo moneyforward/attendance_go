@@ -13,6 +13,7 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 	"github.com/walkure/slashbot_sample/handler"
+	"github.com/walkure/slashbot_sample/pkg/logger"
 )
 
 func createSlackSocketClient() (*slack.Client, *socketmode.Client, error) {
@@ -52,7 +53,7 @@ func createSlackSocketClient() (*slack.Client, *socketmode.Client, error) {
 
 func main() {
 
-	//slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetDefault(logger.InitalizeLogger())
 
 	api, client, err := createSlackSocketClient()
 	if err != nil {

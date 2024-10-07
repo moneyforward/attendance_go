@@ -15,6 +15,7 @@ import (
 
 	"github.com/slack-go/slack"
 	"github.com/walkure/slashbot_sample/handler"
+	"github.com/walkure/slashbot_sample/pkg/logger"
 )
 
 func createSlackClient() (*slack.Client, error) {
@@ -36,7 +37,7 @@ func createSlackClient() (*slack.Client, error) {
 
 func main() {
 
-	//slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetDefault(logger.InitalizeLogger())
 
 	signingSecret := os.Getenv("SLACK_SIGNING_SECRET")
 	api, err := createSlackClient()

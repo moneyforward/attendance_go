@@ -20,10 +20,6 @@ A simple boilerplate for Slack's slash command handling bot
   - `docker build -t webhook -f ./Dockerfile.webhook .`
   - `docker run --rm --env-file ./.env -p 38080:8080  webhook`
 
-## TODO
-
-- set log error level via cmdarg or env
-
 ## license
 
 MIT
