@@ -107,7 +107,10 @@ func main() {
 
 	go func() {
 		slog.Info("server listening", slog.String("port", port))
-		slog.Error("server shutdown", slog.String("error", serv.ListenAndServe().Error()))
+
+		if err := serv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server shutdown", slog.String("error", err.Error()))
+		}
 	}()
 	<-ctx.Done()
 
