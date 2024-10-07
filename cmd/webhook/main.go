@@ -46,10 +46,9 @@ func main() {
 		return
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
 	http.HandleFunc("/events-endpoint", func(w http.ResponseWriter, r *http.Request) {
+
+		ctx := r.Context()
 
 		verifier, err := slack.NewSecretsVerifier(r.Header, signingSecret)
 		if err != nil {
@@ -103,15 +102,18 @@ func main() {
 		Handler: nil,
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	go func() {
 		slog.Info("server listening", slog.String("port", port))
 		slog.Error("server shutdown", slog.String("error", serv.ListenAndServe().Error()))
 	}()
-		<-ctx.Done()
+	<-ctx.Done()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		slog.Warn("shutting down server")
-		serv.Shutdown(ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	slog.Warn("shutting down server")
+	serv.Shutdown(ctx)
 
 }
