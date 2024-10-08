@@ -109,7 +109,7 @@ func main() {
 		slog.Info("server listening", slog.String("port", port))
 
 		if err := serv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("server shutdown", slog.String("error", err.Error()))
+			slog.Error("stop serving", slog.String("error", err.Error()))
 		}
 	}()
 	<-ctx.Done()
@@ -117,6 +117,11 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	slog.Warn("shutting down server")
-	serv.Shutdown(ctx)
+	if err := serv.Shutdown(ctx); err != nil {
+		slog.Error("server shutdown", slog.String("error", err.Error()))
+		if err := serv.Close(); err != nil {
+			slog.Error("server close", slog.String("error", err.Error()))
+		}
+	}
 
 }
